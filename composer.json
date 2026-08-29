@@ -1,0 +1,45 @@
+{
+    "name": "venue-family/sdk",
+    "description": "Official PHP & Laravel SDK for the Venue Family API.",
+    "keywords": ["venue-family", "sdk", "api", "laravel", "events", "ticketing", "venues"],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Venue Family Team",
+            "email": "support@venuefamily.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.5"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0 || ^11.0",
+        "mockery/mockery": "^1.6"
+    },
+    "suggest": {
+        "illuminate/support": "Required to use the Laravel Service Provider and Facade (^10.0|^11.0|^12.0)."
+    },
+    "autoload": {
+        "psr-4": {
+            "VenueFamily\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "VenueFamily\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "VenueFamily\\Laravel\\VenueFamilyServiceProvider"
+            ],
+            "aliases": {
+                "VenueFamily": "VenueFamily\\Laravel\\Facades\\VenueFamily"
+            }
+        }
+    },
+    "minimum-stability": "stable"
+}
