@@ -41,5 +41,12 @@
             }
         }
     },
-    "minimum-stability": "stable"
+    "minimum-stability": "stable",
+    "repositories": [{
+        "packagist.org": false
+    },{
+        "name": "private-packagist",
+        "type": "composer",
+        "url": "https://repo.packagist.com/venue-family/"
+    }]
 }

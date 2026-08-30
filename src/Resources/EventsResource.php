@@ -4,6 +4,8 @@ namespace VenueFamily\Resources;
 
 use VenueFamily\Data\EventData;
 use VenueFamily\Data\EventDateData;
+use VenueFamily\Data\PhaseData;
+use VenueFamily\Data\TicketingData;
 
 class EventsResource extends BaseResource
 {
@@ -142,5 +144,95 @@ class EventsResource extends BaseResource
         $items = $response['data'] ?? $response;
 
         return array_map(fn (array $item) => EventData::fromArray($item), is_array($items) ? $items : []);
+    }
+
+    /**
+     * Get day-structure phases for an event date.
+     *
+     * @return PhaseData[]
+     */
+    public function phases(int $eventId, int $eventDateId): array
+    {
+        $response = $this->client->get("events/{$eventId}/dates/{$eventDateId}/phases");
+        $items = $response['data'] ?? $response;
+
+        return array_map(fn (array $item) => PhaseData::fromArray($item), is_array($items) ? $items : []);
+    }
+
+    /**
+     * Save/reconcile day-structure phases for an event date.
+     *
+     * @param  array<int, array<string, mixed>>  $phases
+     * @return PhaseData[]
+     */
+    public function savePhases(int $eventId, int $eventDateId, array $phases): array
+    {
+        $response = $this->client->put("events/{$eventId}/dates/{$eventDateId}/phases", [
+            'phases' => $phases,
+        ]);
+        $items = $response['data'] ?? $response;
+
+        return array_map(fn (array $item) => PhaseData::fromArray($item), is_array($items) ? $items : []);
+    }
+
+    /**
+     * Get ticketing setup and ticket types for an event.
+     */
+    public function ticketTypes(int $eventId): TicketingData
+    {
+        $response = $this->client->get("events/{$eventId}/ticket-types");
+        $item = $response['data'] ?? $response;
+
+        return TicketingData::fromArray($item);
+    }
+
+    /**
+     * Save/reconcile ticket types for an event.
+     *
+     * @param  array<int, array<string, mixed>>  $ticketTypes
+     * @param  int[]  $dateIds
+     */
+    public function saveTicketTypes(int $eventId, array $ticketTypes, array $dateIds = []): TicketingData
+    {
+        $payload = ['ticket_types' => $ticketTypes];
+        if (! empty($dateIds)) {
+            $payload['date_ids'] = $dateIds;
+        }
+
+        $response = $this->client->put("events/{$eventId}/ticket-types", $payload);
+        $item = $response['data'] ?? $response;
+
+        return TicketingData::fromArray($item);
+    }
+
+    /**
+     * Set sales window start and end across event dates.
+     *
+     * @param  int[]  $dateIds
+     */
+    public function saveSalesWindow(int $eventId, ?string $salesStartAt, ?string $salesEndAt, array $dateIds = []): array
+    {
+        $payload = [
+            'sales_start_at' => $salesStartAt,
+            'sales_end_at' => $salesEndAt,
+        ];
+        if (! empty($dateIds)) {
+            $payload['date_ids'] = $dateIds;
+        }
+
+        return $this->client->put("events/{$eventId}/sales-window", $payload);
+    }
+
+    /**
+     * Set session and phase capacities for an event date.
+     *
+     * @param  array<string, int|null>  $phaseCapacities
+     */
+    public function saveCapacities(int $eventId, int $eventDateId, ?int $dateCapacity, array $phaseCapacities = []): array
+    {
+        return $this->client->put("events/{$eventId}/dates/{$eventDateId}/capacities", [
+            'date_capacity' => $dateCapacity,
+            'phase_capacities' => $phaseCapacities,
+        ]);
     }
 }
