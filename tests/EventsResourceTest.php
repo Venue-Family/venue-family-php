@@ -158,6 +158,91 @@ class EventsResourceTest extends TestCase
         $this->assertSame('VIP Access', $ticketing->ticketTypes[0]->name);
     }
 
+    public function test_it_hydrates_event_images_and_slot_metadata(): void
+    {
+        $client = new VenueFamilyClient('token', 'the-418-project');
+        $client->fake([
+            'events/42' => [
+                'data' => [
+                    'id' => 42,
+                    'title' => 'Spring Dance Festival',
+                    'images' => [
+                        [
+                            'id' => 101,
+                            'name' => 'banner.jpg',
+                            'url' => 'https://example.test/storage/images/banner.jpg',
+                            'type' => 'image',
+                            'primary' => true,
+                            'slot' => 'banner',
+                            'slots' => [
+                                ['name' => 'banner', 'slot' => 'banner', 'sort_order' => 1],
+                            ],
+                            'width' => 1920,
+                            'height' => 960,
+                            'aspect_ratio' => 2.0,
+                            'aspect_ratio_label' => '2:1',
+                        ],
+                        [
+                            'id' => 102,
+                            'name' => 'flyer.jpg',
+                            'url' => 'https://example.test/storage/images/flyer.jpg',
+                            'type' => 'image',
+                            'primary' => false,
+                            'slot' => 'page',
+                            'slots' => [
+                                ['name' => 'page', 'slot' => 'page', 'sort_order' => 1],
+                                ['name' => 'gallery', 'slot' => 'gallery', 'sort_order' => 2],
+                            ],
+                            'width' => 1080,
+                            'height' => 1350,
+                            'aspect_ratio' => 0.8,
+                            'aspect_ratio_label' => '4:5',
+                        ],
+                        [
+                            'id' => 103,
+                            'name' => 'gallery-1.jpg',
+                            'url' => 'https://example.test/storage/images/gallery-1.jpg',
+                            'type' => 'image',
+                            'primary' => false,
+                            'slot' => 'gallery',
+                            'slots' => [
+                                ['name' => 'gallery', 'slot' => 'gallery', 'sort_order' => 1],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $event = $client->events()->find(42);
+
+        $this->assertCount(3, $event->images);
+
+        $banner = $event->bannerImage();
+        $this->assertNotNull($banner);
+        $this->assertSame(101, $banner->id);
+        $this->assertTrue($banner->isBanner());
+        $this->assertTrue($banner->isPrimary);
+        $this->assertSame(2.0, $banner->aspectRatio);
+        $this->assertSame('2:1', $banner->aspectRatioLabel);
+        $this->assertCount(1, $banner->slots);
+        $this->assertSame('banner', $banner->slots[0]->slot);
+
+        $flyer = $event->pageImage();
+        $this->assertNotNull($flyer);
+        $this->assertSame(102, $flyer->id);
+        $this->assertTrue($flyer->isPage());
+        $this->assertTrue($flyer->hasSlot('gallery'));
+        $this->assertFalse($flyer->isPrimary);
+
+        $gallery = $event->galleryMedia();
+        $this->assertCount(2, $gallery);
+        $this->assertSame(102, $gallery[0]->id);
+        $this->assertSame(103, $gallery[1]->id);
+
+        $this->assertNull($event->listImage());
+    }
+
     public function test_it_throws_exception_if_no_organization_is_set_for_scoped_call(): void
     {
         $this->expectException(\InvalidArgumentException::class);

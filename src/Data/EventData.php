@@ -7,6 +7,7 @@ class EventData
     /**
      * @param  EventDateData[]  $upcomingDates
      * @param  EventDateData[]  $allDates
+     * @param  MediaData[]  $images
      */
     public function __construct(
         public readonly int $id,
@@ -25,6 +26,7 @@ class EventData
         public readonly array $locations = [],
         public readonly array $upcomingDates = [],
         public readonly array $allDates = [],
+        public readonly array $images = [],
         public readonly array $raw = []
     ) {}
 
@@ -58,6 +60,16 @@ class EventData
             $ticketing = TicketingData::fromArray($data['ticketing']);
         }
 
+        $images = [];
+        $rawImages = $data['images'] ?? $data['media'] ?? [];
+        if (! empty($rawImages) && is_array($rawImages)) {
+            foreach ($rawImages as $imageArr) {
+                if (is_array($imageArr)) {
+                    $images[] = MediaData::fromArray($imageArr);
+                }
+            }
+        }
+
         $title = $data['title'] ?? $data['name'] ?? '';
         $coverImageUrl = $data['cover_image_url'] ?? $data['image_url'] ?? null;
         $ticketPrice = isset($data['ticket_price']) ? (string) $data['ticket_price'] : ($ticketing?->formattedPriceRange);
@@ -79,8 +91,55 @@ class EventData
             locations: $data['locations'] ?? [],
             upcomingDates: $dates,
             allDates: $allDates,
+            images: $images,
             raw: $data
         );
+    }
+
+    /**
+     * Find the first media item assigned to a specific slot.
+     */
+    public function mediaForSlot(string $slot): ?MediaData
+    {
+        foreach ($this->images as $image) {
+            if ($image->hasSlot($slot) || $image->slot === $slot) {
+                return $image;
+            }
+        }
+
+        return null;
+    }
+
+    public function bannerImage(): ?MediaData
+    {
+        return $this->mediaForSlot('banner') ?? ($this->images[0] ?? null);
+    }
+
+    public function listImage(): ?MediaData
+    {
+        return $this->mediaForSlot('list');
+    }
+
+    public function pageImage(): ?MediaData
+    {
+        return $this->mediaForSlot('page');
+    }
+
+    /**
+     * Get all media items in the gallery slot, ordered by sort_order.
+     *
+     * @return MediaData[]
+     */
+    public function galleryMedia(): array
+    {
+        $gallery = [];
+        foreach ($this->images as $image) {
+            if ($image->hasSlot('gallery') || $image->slot === 'gallery') {
+                $gallery[] = $image;
+            }
+        }
+
+        return $gallery;
     }
 
     public function toArray(): array

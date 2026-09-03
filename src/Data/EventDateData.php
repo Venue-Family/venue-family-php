@@ -6,6 +6,7 @@ class EventDateData
 {
     /**
      * @param  PhaseData[]  $phases
+     * @param  MediaData[]  $images
      */
     public function __construct(
         public readonly int $id,
@@ -19,6 +20,7 @@ class EventDateData
         public readonly array $locations = [],
         public readonly array $phases = [],
         public readonly ?TicketingData $ticketing = null,
+        public readonly array $images = [],
         public readonly array $raw = []
     ) {}
 
@@ -36,6 +38,16 @@ class EventDateData
             $ticketing = TicketingData::fromArray($data['ticketing']);
         }
 
+        $images = [];
+        $rawImages = $data['images'] ?? $data['media'] ?? [];
+        if (! empty($rawImages) && is_array($rawImages)) {
+            foreach ($rawImages as $imageArr) {
+                if (is_array($imageArr)) {
+                    $images[] = MediaData::fromArray($imageArr);
+                }
+            }
+        }
+
         $isSoldOut = (bool) ($data['is_sold_out'] ?? ($ticketing?->soldOut ?? false));
 
         return new self(
@@ -50,6 +62,7 @@ class EventDateData
             locations: $data['locations'] ?? [],
             phases: $phases,
             ticketing: $ticketing,
+            images: $images,
             raw: $data
         );
     }
