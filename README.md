@@ -2,9 +2,9 @@
 
 Official PHP and Laravel client library for integrating with the [Venue Family](https://venuefamily.com) API, ticketing, schedules, and dynamic forms.
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/venue-family/sdk.svg?style=flat-square)](https://packagist.org/packages/venue-family/sdk)
-[![Total Downloads](https://img.shields.io/packagist/dt/venue-family/sdk.svg?style=flat-square)](https://packagist.org/packages/venue-family/sdk)
-[![License](https://img.shields.io/packagist/l/venue-family/sdk.svg?style=flat-square)](https://packagist.org/packages/venue-family/sdk)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/venue-family/sdk.svg?style=flat-square)](https://packagist.com/orgs/venue-family/packages/4927569)
+[![Total Downloads](https://img.shields.io/packagist/dt/venue-family/sdk.svg?style=flat-square)](https://packagist.com/orgs/venue-family/packages/4927569)
+[![License](https://img.shields.io/packagist/l/venue-family/sdk.svg?style=flat-square)](https://packagist.com/orgs/venue-family/packages/4927569)
 
 ---
 

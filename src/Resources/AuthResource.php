@@ -13,7 +13,8 @@ class AuthResource extends BaseResource
         string $email,
         string $password,
         ?string $organizationSlug = null,
-        ?string $deviceName = 'Venue Family SDK'
+        ?string $deviceName = 'Venue Family SDK',
+        ?string $purpose = null
     ): array {
         $payload = [
             'email' => $email,
@@ -23,6 +24,10 @@ class AuthResource extends BaseResource
 
         if ($organizationSlug !== null) {
             $payload['organization_slug'] = $organizationSlug;
+        }
+
+        if ($purpose !== null) {
+            $payload['purpose'] = $purpose;
         }
 
         return $this->client->post('auth/login', $payload);
