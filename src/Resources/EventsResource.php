@@ -58,6 +58,22 @@ class EventsResource extends BaseResource
     }
 
     /**
+     * Retrieve events occurring within an arbitrary date range.
+     *
+     * @return EventData[]
+     */
+    public function between(string|\DateTimeInterface $start, string|\DateTimeInterface $end, array $query = []): array
+    {
+        $startDate = $start instanceof \DateTimeInterface ? $start->format('Y-m-d') : $start;
+        $endDate = $end instanceof \DateTimeInterface ? $end->format('Y-m-d') : $end;
+
+        $query['start_date'] = $startDate;
+        $query['end_date'] = $endDate;
+
+        return $this->all($query);
+    }
+
+    /**
      * Retrieve recurring events for the active organization.
      *
      * @return EventData[]

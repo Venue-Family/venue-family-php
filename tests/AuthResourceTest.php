@@ -29,6 +29,29 @@ class AuthResourceTest extends TestCase
         $this->assertSame('Alice Artist', $response['user']['name']);
     }
 
+    public function test_it_passes_purpose_when_provided(): void
+    {
+        $client = new VenueFamilyClient;
+        $fake = $client->fake([
+            'auth/login' => [
+                'token' => 'sanctum_embed_token_456',
+                'token_type' => 'Bearer',
+                'user' => [
+                    'id' => 1,
+                    'name' => 'Alice Artist',
+                    'email' => 'alice@example.com',
+                ],
+            ],
+        ]);
+
+        $response = $client->auth()->login('alice@example.com', 'password', 'the-418-project', 'Web', 'embed');
+
+        $this->assertSame('sanctum_embed_token_456', $response['token']);
+        $fake->assertSent(function (string $method, string $url, array $options) {
+            return ($options['json']['purpose'] ?? null) === 'embed';
+        });
+    }
+
     public function test_it_retrieves_authenticated_user_profile(): void
     {
         $client = new VenueFamilyClient('sanctum_token');

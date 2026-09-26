@@ -103,6 +103,63 @@ class MediaData
         return $this->hasSlot('gallery') || $this->slot === 'gallery';
     }
 
+    /**
+     * Get transformed / CDN image URL with query parameters (e.g. ['w' => 800, 'format' => 'webp']).
+     */
+    public function url(array $params = []): string
+    {
+        if (empty($params)) {
+            return $this->url;
+        }
+
+        $parsed = parse_url($this->url);
+        $query = [];
+        if (! empty($parsed['query'])) {
+            parse_str($parsed['query'], $query);
+        }
+
+        $merged = array_merge($query, $params);
+        $queryString = http_build_query($merged);
+
+        $base = '';
+        if (! empty($parsed['scheme'])) {
+            $base .= $parsed['scheme'].'://';
+        }
+        if (! empty($parsed['host'])) {
+            $base .= $parsed['host'];
+        }
+        if (! empty($parsed['port'])) {
+            $base .= ':'.$parsed['port'];
+        }
+        $base .= $parsed['path'] ?? '';
+
+        return $base.'?'.$queryString;
+    }
+
+    public function transformedUrl(array $params = []): string
+    {
+        return $this->url($params);
+    }
+
+    /**
+     * Generate an HTML srcset string for responsive images.
+     *
+     * @param  int[]  $widths
+     */
+    public function srcSet(array $widths = [400, 800, 1200], ?string $format = null): string
+    {
+        $sources = [];
+        foreach ($widths as $width) {
+            $params = ['w' => $width];
+            if ($format !== null) {
+                $params['format'] = $format;
+            }
+            $sources[] = $this->url($params)." {$width}w";
+        }
+
+        return implode(', ', $sources);
+    }
+
     public function toArray(): array
     {
         return $this->raw;

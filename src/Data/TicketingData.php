@@ -51,6 +51,102 @@ class TicketingData
         );
     }
 
+    public function isBuyable(): bool
+    {
+        return $this->hasTickets
+            && $this->onSale
+            && ! $this->soldOut;
+    }
+
+    public function isFree(): bool
+    {
+        if (strcasecmp((string) $this->formattedPriceRange, 'Free') === 0) {
+            return true;
+        }
+
+        if ($this->hasTickets && $this->minPrice !== null && $this->maxPrice !== null) {
+            return (float) $this->minPrice === 0.0 && (float) $this->maxPrice === 0.0;
+        }
+
+        return false;
+    }
+
+    public function isSlidingScale(): bool
+    {
+        if ($this->minPrice !== null && $this->maxPrice !== null) {
+            return (float) $this->minPrice < (float) $this->maxPrice;
+        }
+
+        return ! empty($this->formattedPriceRange)
+            && (str_contains($this->formattedPriceRange, '–') || str_contains($this->formattedPriceRange, '-'));
+    }
+
+    public function isSlidingScaleFromZero(): bool
+    {
+        if (! $this->isSlidingScale()) {
+            return false;
+        }
+
+        if ($this->minPrice !== null) {
+            return (float) $this->minPrice === 0.0;
+        }
+
+        return str_starts_with(trim((string) $this->formattedPriceRange), '$0');
+    }
+
+    public function buttonLabel(): string
+    {
+        if ($this->soldOut) {
+            return 'Sold Out';
+        }
+
+        if (! $this->onSale) {
+            return 'Sales Closed';
+        }
+
+        if (! $this->hasTickets) {
+            return 'Tickets';
+        }
+
+        if ($this->isFree()) {
+            return 'RSVP Free';
+        }
+
+        if ($this->isSlidingScaleFromZero()) {
+            $maxFormatted = $this->maxPrice !== null
+                ? (floor($this->maxPrice) == $this->maxPrice ? '$'.number_format($this->maxPrice, 0) : '$'.number_format($this->maxPrice, 2))
+                : '';
+            $range = $maxFormatted ? "Free – {$maxFormatted}" : 'Free';
+
+            return "Register ({$range})";
+        }
+
+        if ($this->isSlidingScale()) {
+            if (! empty($this->formattedPriceRange)) {
+                return "Tickets ({$this->formattedPriceRange})";
+            }
+
+            $minFormatted = floor($this->minPrice) == $this->minPrice ? '$'.number_format($this->minPrice, 0) : '$'.number_format($this->minPrice, 2);
+            $maxFormatted = floor($this->maxPrice) == $this->maxPrice ? '$'.number_format($this->maxPrice, 0) : '$'.number_format($this->maxPrice, 2);
+
+            return "Tickets ({$minFormatted} – {$maxFormatted})";
+        }
+
+        if (! empty($this->formattedPriceRange)) {
+            return "Get Tickets ({$this->formattedPriceRange})";
+        }
+
+        if ($this->minPrice !== null) {
+            $formatted = floor($this->minPrice) == $this->minPrice
+                ? '$'.number_format($this->minPrice, 0)
+                : '$'.number_format($this->minPrice, 2);
+
+            return "Get Tickets ({$formatted})";
+        }
+
+        return 'Get Tickets';
+    }
+
     public function toArray(): array
     {
         return $this->raw;

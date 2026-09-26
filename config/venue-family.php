@@ -56,4 +56,20 @@ return [
     */
     'timeout' => (float) env('VENUE_FAMILY_TIMEOUT', 30.0),
 
+    /*
+    |--------------------------------------------------------------------------
+    | API Response Caching
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, GET responses from the Venue Family API will be cached
+    | using your application's default cache store or specified store.
+    |
+    */
+    'cache' => [
+        'enabled' => (bool) env('VENUE_FAMILY_CACHE_ENABLED', false),
+        'ttl' => (int) env('VENUE_FAMILY_CACHE_TTL', 900),
+        'tag' => env('VENUE_FAMILY_CACHE_TAG', 'venue-family'),
+        'store' => env('VENUE_FAMILY_CACHE_STORE'),
+    ],
+
 ];

@@ -13,16 +13,20 @@ use VenueFamily\Exceptions\NotFoundException;
 use VenueFamily\Exceptions\RateLimitException;
 use VenueFamily\Exceptions\ValidationException;
 use VenueFamily\Exceptions\VenueFamilyException;
+use VenueFamily\Resources\ArtistsResource;
 use VenueFamily\Resources\AuthResource;
 use VenueFamily\Resources\ConversionsResource;
+use VenueFamily\Resources\EmbedResource;
 use VenueFamily\Resources\EventsResource;
 use VenueFamily\Resources\FormsResource;
 use VenueFamily\Resources\InterestsResource;
 use VenueFamily\Resources\LocationsResource;
+use VenueFamily\Resources\MarketplaceResource;
 use VenueFamily\Resources\ReviewsResource;
 use VenueFamily\Resources\RolesResource;
 use VenueFamily\Resources\SignaturesResource;
 use VenueFamily\Resources\UsersResource;
+use VenueFamily\Resources\VolunteeringResource;
 use VenueFamily\Testing\VenueFamilyFake;
 
 class VenueFamilyClient
@@ -30,6 +34,17 @@ class VenueFamilyClient
     private ?ClientInterface $httpClient = null;
 
     private ?VenueFamilyFake $fake = null;
+
+    /** @var (callable(string): (?array))|null */
+    private $cacheGet = null;
+
+    /** @var (callable(string, array, int): void)|null */
+    private $cachePut = null;
+
+    /** @var (callable(): void)|null */
+    private $cacheFlush = null;
+
+    private int $cacheTtl = 900;
 
     public function __construct(
         private ?string $apiKey = null,
@@ -58,6 +73,43 @@ class VenueFamilyClient
         $clone->organization = $organization;
 
         return $clone;
+    }
+
+    /**
+     * Create a new client instance with a specific bearer token / API key.
+     */
+    public function withToken(string $token): self
+    {
+        $clone = clone $this;
+        $clone->apiKey = $token;
+
+        return $clone;
+    }
+
+    public function withApiKey(string $apiKey): self
+    {
+        return $this->withToken($apiKey);
+    }
+
+    /**
+     * Configure client-level response caching for GET requests.
+     */
+    public function withCache(?callable $get, ?callable $put, ?callable $flush = null, int $ttl = 900): self
+    {
+        $clone = clone $this;
+        $clone->cacheGet = $get;
+        $clone->cachePut = $put;
+        $clone->cacheFlush = $flush;
+        $clone->cacheTtl = $ttl;
+
+        return $clone;
+    }
+
+    public function flushCache(): void
+    {
+        if ($this->cacheFlush !== null) {
+            ($this->cacheFlush)();
+        }
     }
 
     public function getOrganization(): ?string
@@ -127,6 +179,26 @@ class VenueFamilyClient
         return new InterestsResource($this);
     }
 
+    public function embed(): EmbedResource
+    {
+        return new EmbedResource($this);
+    }
+
+    public function artists(): ArtistsResource
+    {
+        return new ArtistsResource($this);
+    }
+
+    public function marketplace(): MarketplaceResource
+    {
+        return new MarketplaceResource($this);
+    }
+
+    public function volunteering(): VolunteeringResource
+    {
+        return new VolunteeringResource($this);
+    }
+
     // --- Testing Harness ---
 
     public function fake(?array $responses = null): VenueFamilyFake
@@ -150,12 +222,35 @@ class VenueFamilyClient
 
     public function get(string $path, array $query = []): array
     {
+        $cacheKey = $this->buildCacheKey('GET', $path, $query);
+
+        if ($this->cacheGet !== null) {
+            $cached = ($this->cacheGet)($cacheKey);
+            if ($cached !== null && is_array($cached)) {
+                return $cached;
+            }
+        }
+
         $options = [];
         if (! empty($query)) {
             $options['query'] = $query;
         }
 
-        return $this->sendRequest('GET', $path, $options);
+        $response = $this->sendRequest('GET', $path, $options);
+
+        if ($this->cachePut !== null && ! empty($response)) {
+            ($this->cachePut)($cacheKey, $response, $this->cacheTtl);
+        }
+
+        return $response;
+    }
+
+    protected function buildCacheKey(string $method, string $path, array $query = []): string
+    {
+        $org = $this->organization ?? 'global';
+        $queryString = ! empty($query) ? '?'.http_build_query($query) : '';
+
+        return "vf_{$org}_{$method}_".md5("{$path}{$queryString}");
     }
 
     public function post(string $path, array $data = []): array
