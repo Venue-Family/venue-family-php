@@ -60,16 +60,16 @@ class VenueFamily extends Facade
      */
     public static function fake(?array $responses = null): VenueFamilyFake
     {
-        $fake = new VenueFamilyFake($responses ?? []);
         static::swap(new VenueFamilyClient(
             apiKey: 'test-key',
             organization: 'test-org',
             baseUrl: 'https://venuefamily.test/api'
         ));
 
-        static::getFacadeRoot()->fake($responses ?? []);
-
-        return $fake;
+        // The client builds the fake it records on, so that is the one to hand
+        // back. A second instance made here recorded nothing, and every
+        // assertion on it saw an empty log.
+        return static::getFacadeRoot()->fake($responses ?? []);
     }
 
     /**
