@@ -16,7 +16,8 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^10.0 || ^11.0",
-        "mockery/mockery": "^1.6"
+        "mockery/mockery": "^1.6",
+        "illuminate/support": "^10.0|^11.0|^12.0"
     },
     "suggest": {
         "illuminate/support": "Required to use the Laravel Service Provider and Facade (^10.0|^11.0|^12.0)."

@@ -247,7 +247,10 @@ class EventData
             return '';
         }
 
-        if (class_exists(Str::class) && method_exists(Str::class, 'markdown')) {
+        // Str::markdown() needs league/commonmark, which laravel/framework requires
+        // and illuminate/support on its own does not — so "Str exists" alone was a
+        // fatal "class not found" for a consumer holding only the support package.
+        if (class_exists(Str::class) && method_exists(Str::class, 'markdown') && class_exists(CommonMarkConverter::class)) {
             return (string) Str::markdown($clean, ['allow_unsafe_links' => false]);
         }
 
